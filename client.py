@@ -1,0 +1,103 @@
+#!/usr/venv/bin/python
+
+import socket
+import ssl
+import re
+import sys
+
+
+def main(argv):
+    # establish TSL connection
+    my_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    wrap_socket = ssl.wrap_socket(my_socket, ssl_version=ssl.PROTOCOL_TLSv1)
+
+    n = 1
+    if sys.argv[n] == "-p":
+        if sys.argv[n+1].isdigit():
+            port = sys.argv[n+1]
+            try:
+                if sys.argv[n+2] == "-s":
+                    connection_ssl(wrap_socket, n+3, port)
+                else:
+                    print("invalid script!\n")
+                    sys.exit()
+            except IndexError:
+                print("missing -s in script")
+                sys.exit()
+        else:
+            print("invalid port number!\n")
+            sys.exit()
+
+    elif sys.argv[n] == "-s":
+        # assume port is 27995
+        connection_ssl(wrap_socket, n+1, "27995")
+    else:
+        print("invalid script!\n")
+        sys.exit()
+
+
+def modify_server_response(response_from_server):
+    modified_response = re.sub("<<", "<< 13", response_from_server[22:])
+    return modified_response
+
+
+def return_to_response(modified_response):
+    try:
+        evaluate_result = eval(modified_response)
+        return_to_server = "cs5700spring2022 STATUS " + str(evaluate_result) + "\n"
+        return return_to_server.encode()
+    except ZeroDivisionError:
+        error_message = "cs5700spring2022 ERR #DIV/0\n"
+        return error_message.encode()
+
+
+def get_server_response(wrap_socket):
+    response_from_server = ""
+    while True:
+        data_from_server = wrap_socket.recv(16384).decode()
+        response_from_server += data_from_server
+        if data_from_server[-1] == "\n":
+            break
+    return response_from_server
+
+
+def connection_ssl(wrap_socket, n, port):
+    try:
+        if sys.argv[n] == "project1.5700.network":
+            host_name = sys.argv[n]
+            n += 1
+        else:
+            print("invalid host name!\n")
+            sys.exit()
+        try:
+            user_id = sys.argv[n]
+            if not(user_id.isdigit()) or (user_id[0:2] != '00'):
+                print("invalid user id")
+                sys.exit()
+        except IndexError:
+            print("missing user id!")
+            sys.exit()
+    except IndexError:
+        print("missing host name")
+        sys.exit()
+
+    # connect with server
+    wrap_socket.connect((host_name, int(port)))
+
+    # sending first message to the server
+    initial_message = 'cs5700spring2022 HELLO nguyen.bac\n'
+    wrap_socket.send(initial_message.encode())
+
+    while True:
+        response_from_server = get_server_response(wrap_socket)
+        if response_from_server[17:20] == "BYE":
+            print(response_from_server[21:])
+            wrap_socket.close()
+            break
+        modified_response = modify_server_response(response_from_server)
+        response_from_client = return_to_response(modified_response)
+        wrap_socket.send(response_from_client)
+
+
+if __name__ == "__main__":
+    main(sys.argv[0:])
