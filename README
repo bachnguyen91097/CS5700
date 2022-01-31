@@ -1,0 +1,19 @@
+High-level approach:
+    For this project 1 (Socket Basics), I basically started learning about how to write basic network code,
+    which includes setting up the client and connect it with the provided server. Then once I resolved that one
+    ,I started figuring out way to process server's response (evaluate the expression using the builtin method
+    eval) and then making sure that the client can send proper message to the server and the client can receive
+    responses from the server as expected. The final step after making sure that all the logic is correct, is that
+    I need to find out the way to call the program using the required command (./client ...).
+
+Challenges:
+    - A major one is to figure out how to write proper network code since I have never done this before (a couple
+    of googling and asking TAs/professor via Team and Piazza helps a ton. Thanks you guys so much)
+    - Making sure that the program can only be run by the correct executing command, which involves a lot of try/
+    catch block
+    - Figuring out how to write the Makefile in order to resolve "Permission error", also learn that we can make
+    a Python file executable by removing the ".py" part and adding a "shebang" line at the top of the file
+
+Testing:
+    - Can run the program with the proper command line (split out the secret flag or not?)
+    - Try to mess up with the command call and see if it works as expected.
